@@ -80,6 +80,9 @@ class AuthorizationCodeGrant {
   /// This will be passed as-is to the constructed [Client].
   final CredentialsRefreshedCallback? _onCredentialsRefreshed;
 
+  /// Callback to be invoked whenever the credentials started to refresh.
+  final CredentialsRefreshingCallback? _onCredentialsRefreshing;
+
   /// Whether to use HTTP Basic authentication for authorizing the client.
   final bool _basicAuth;
 
@@ -104,8 +107,7 @@ class AuthorizationCodeGrant {
   _State _state = _State.initial;
 
   /// Allowed characters for generating the _codeVerifier
-  static const String _charset =
-      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
+  static const String _charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
 
   /// The PKCE code verifier. Will be generated if one is not provided in the
   /// constructor.
@@ -146,21 +148,21 @@ class AuthorizationCodeGrant {
   /// format as the [standard JSON response][].
   ///
   /// [standard JSON response]: https://tools.ietf.org/html/rfc6749#section-5.1
-  AuthorizationCodeGrant(
-      this.identifier, this.authorizationEndpoint, this.tokenEndpoint,
+  AuthorizationCodeGrant(this.identifier, this.authorizationEndpoint, this.tokenEndpoint,
       {this.secret,
       String? delimiter,
       bool basicAuth = true,
       http.Client? httpClient,
       CredentialsRefreshedCallback? onCredentialsRefreshed,
-      Map<String, dynamic> Function(MediaType? contentType, String body)?
-          getParameters,
+      CredentialsRefreshingCallback? onCredentialsRefreshing,
+      Map<String, dynamic> Function(MediaType? contentType, String body)? getParameters,
       String? codeVerifier})
       : _basicAuth = basicAuth,
         _httpClient = httpClient ?? http.Client(),
         _delimiter = delimiter ?? ' ',
         _getParameters = getParameters ?? parseJsonParameters,
         _onCredentialsRefreshed = onCredentialsRefreshed,
+        _onCredentialsRefreshing = onCredentialsRefreshing,
         _codeVerifier = codeVerifier ?? _createCodeVerifier();
 
   /// Returns the URL to which the resource owner should be redirected to
@@ -182,17 +184,14 @@ class AuthorizationCodeGrant {
   /// query parameters provided to the redirect URL.
   ///
   /// It is a [StateError] to call this more than once.
-  Uri getAuthorizationUrl(Uri redirect,
-      {Iterable<String>? scopes, String? state}) {
+  Uri getAuthorizationUrl(Uri redirect, {Iterable<String>? scopes, String? state}) {
     if (_state != _State.initial) {
       throw StateError('The authorization URL has already been generated.');
     }
     _state = _State.awaitingResponse;
 
     var scopeList = scopes?.toList() ?? <String>[];
-    var codeChallenge = base64Url
-        .encode(sha256.convert(ascii.encode(_codeVerifier)).bytes)
-        .replaceAll('=', '');
+    var codeChallenge = base64Url.encode(sha256.convert(ascii.encode(_codeVerifier)).bytes).replaceAll('=', '');
 
     _redirectEndpoint = redirect;
     _scopes = scopeList;
@@ -229,8 +228,7 @@ class AuthorizationCodeGrant {
   /// value.
   ///
   /// Throws [AuthorizationException] if the authorization fails.
-  Future<Client> handleAuthorizationResponse(
-      Map<String, String> parameters) async {
+  Future<Client> handleAuthorizationResponse(Map<String, String> parameters) async {
     if (_state == _State.initial) {
       throw StateError('The authorization URL has not yet been generated.');
     } else if (_state == _State.finished) {
@@ -314,18 +312,19 @@ class AuthorizationCodeGrant {
       if (secret != null) body['client_secret'] = secret;
     }
 
-    var response =
-        await _httpClient!.post(tokenEndpoint, headers: headers, body: body);
+    var response = await _httpClient!.post(tokenEndpoint, headers: headers, body: body);
 
-    var credentials = handleAccessTokenResponse(
-        response, tokenEndpoint, startTime, _scopes, _delimiter,
+    var credentials = handleAccessTokenResponse(response, tokenEndpoint, startTime, _scopes, _delimiter,
         getParameters: _getParameters);
-    return Client(credentials,
-        identifier: identifier,
-        secret: secret,
-        basicAuth: _basicAuth,
-        httpClient: _httpClient,
-        onCredentialsRefreshed: _onCredentialsRefreshed);
+    return Client(
+      credentials,
+      identifier: identifier,
+      secret: secret,
+      basicAuth: _basicAuth,
+      httpClient: _httpClient,
+      onCredentialsRefreshed: _onCredentialsRefreshed,
+      onCredentialsRefreshing: _onCredentialsRefreshing,
+    );
   }
 
   // Randomly generate a 128 character string to be used as the PKCE code

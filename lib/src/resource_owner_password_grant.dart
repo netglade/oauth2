@@ -44,25 +44,20 @@ import 'utils.dart';
 /// format as the [standard JSON response][].
 ///
 /// [standard JSON response]: https://tools.ietf.org/html/rfc6749#section-5.1
-Future<Client> resourceOwnerPasswordGrant(
-    Uri authorizationEndpoint, String username, String password,
+Future<Client> resourceOwnerPasswordGrant(Uri authorizationEndpoint, String username, String password,
     {String? identifier,
     String? secret,
     Iterable<String>? scopes,
     bool basicAuth = true,
     CredentialsRefreshedCallback? onCredentialsRefreshed,
+    CredentialsRefreshingCallback? onCredentialsRefreshing,
     http.Client? httpClient,
     String? delimiter,
-    Map<String, dynamic> Function(MediaType? contentType, String body)?
-        getParameters}) async {
+    Map<String, dynamic> Function(MediaType? contentType, String body)? getParameters}) async {
   delimiter ??= ' ';
   var startTime = DateTime.now();
 
-  var body = {
-    'grant_type': 'password',
-    'username': username,
-    'password': password
-  };
+  var body = {'grant_type': 'password', 'username': username, 'password': password};
 
   var headers = <String, String>{};
 
@@ -80,15 +75,16 @@ Future<Client> resourceOwnerPasswordGrant(
   }
 
   httpClient ??= http.Client();
-  var response = await httpClient.post(authorizationEndpoint,
-      headers: headers, body: body);
+  var response = await httpClient.post(authorizationEndpoint, headers: headers, body: body);
 
-  var credentials = handleAccessTokenResponse(
-      response, authorizationEndpoint, startTime, scopes?.toList(), delimiter,
+  var credentials = handleAccessTokenResponse(response, authorizationEndpoint, startTime, scopes?.toList(), delimiter,
       getParameters: getParameters);
-  return Client(credentials,
-      identifier: identifier,
-      secret: secret,
-      httpClient: httpClient,
-      onCredentialsRefreshed: onCredentialsRefreshed);
+  return Client(
+    credentials,
+    identifier: identifier,
+    secret: secret,
+    httpClient: httpClient,
+    onCredentialsRefreshed: onCredentialsRefreshed,
+    onCredentialsRefreshing: onCredentialsRefreshing,
+  );
 }
