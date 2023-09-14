@@ -1,3 +1,6 @@
+## 2.1.1
+ * Add `rawParsedData` parameter to credentials object for raw response data
+
 # 2.0.1
 
 * Handle `expires_in` when encoded as string.
