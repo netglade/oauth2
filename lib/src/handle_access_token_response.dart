@@ -94,7 +94,7 @@ Credentials handleAccessTokenResponse(
       tokenEndpoint: tokenEndpoint,
       scopes: scopes,
       expiration: expiration,
-      parsed: parameters,
+      rawResponseData: parameters,
     );
   } on FormatException catch (e) {
     throw FormatException('Invalid OAuth response for "$tokenEndpoint": '

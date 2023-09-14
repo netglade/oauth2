@@ -26,7 +26,7 @@ void main() {
       var credentials = oauth2.Credentials(
         'access token',
         expiration: expiration,
-        parsed: {},
+        rawResponseData: {},
       );
       var client = oauth2.Client(credentials, identifier: 'identifier', secret: 'secret', httpClient: httpClient);
 
@@ -42,7 +42,7 @@ void main() {
         refreshToken: 'refresh token',
         tokenEndpoint: tokenEndpoint,
         expiration: expiration,
-        parsed: {},
+        rawResponseData: {},
       );
       var client = oauth2.Client(credentials, identifier: 'identifier', secret: 'secret', httpClient: httpClient);
 
@@ -72,7 +72,7 @@ void main() {
         refreshToken: 'refresh token',
         tokenEndpoint: tokenEndpoint,
         expiration: expiration,
-        parsed: {},
+        rawResponseData: {},
       );
       var client = oauth2.Client(credentials, identifier: 'identifier', secret: 'secret', httpClient: httpClient);
 
@@ -111,7 +111,7 @@ void main() {
         refreshToken: 'refresh token',
         tokenEndpoint: tokenEndpoint,
         expiration: expiration,
-        parsed: {},
+        rawResponseData: {},
       );
       var client = oauth2.Client(credentials, identifier: 'identifier', secret: 'secret', httpClient: httpClient,
           onCredentialsRefreshed: (credentials) {
@@ -142,7 +142,7 @@ void main() {
     test('sends a request with bearer authorization', () {
       var credentials = oauth2.Credentials(
         'access token',
-        parsed: {},
+        rawResponseData: {},
       );
       var client = oauth2.Client(credentials, identifier: 'identifier', secret: 'secret', httpClient: httpClient);
 
@@ -162,7 +162,7 @@ void main() {
         'access token',
         refreshToken: 'refresh token',
         tokenEndpoint: tokenEndpoint,
-        parsed: {},
+        rawResponseData: {},
       );
       var client = oauth2.Client(credentials, identifier: 'identifier', secret: 'secret', httpClient: httpClient);
 
@@ -180,7 +180,7 @@ void main() {
     test("without a refresh token can't manually refresh the credentials", () {
       var credentials = oauth2.Credentials(
         'access token',
-        parsed: {},
+        rawResponseData: {},
       );
       var client = oauth2.Client(credentials, identifier: 'identifier', secret: 'secret', httpClient: httpClient);
 
@@ -192,7 +192,7 @@ void main() {
     test('throws an AuthorizationException for a 401 response', () {
       var credentials = oauth2.Credentials(
         'access token',
-        parsed: {},
+        rawResponseData: {},
       );
       var client = oauth2.Client(credentials, identifier: 'identifier', secret: 'secret', httpClient: httpClient);
 
@@ -212,7 +212,7 @@ void main() {
     test('passes through a 401 response without www-authenticate', () async {
       var credentials = oauth2.Credentials(
         'access token',
-        parsed: {},
+        rawResponseData: {},
       );
       var client = oauth2.Client(credentials, identifier: 'identifier', secret: 'secret', httpClient: httpClient);
 
@@ -230,7 +230,7 @@ void main() {
     test('passes through a 401 response with invalid www-authenticate', () async {
       var credentials = oauth2.Credentials(
         'access token',
-        parsed: {},
+        rawResponseData: {},
       );
       var client = oauth2.Client(credentials, identifier: 'identifier', secret: 'secret', httpClient: httpClient);
 
@@ -250,7 +250,7 @@ void main() {
     test('passes through a 401 response with non-bearer www-authenticate', () async {
       var credentials = oauth2.Credentials(
         'access token',
-        parsed: {},
+        rawResponseData: {},
       );
       var client = oauth2.Client(credentials, identifier: 'identifier', secret: 'secret', httpClient: httpClient);
 
@@ -268,7 +268,7 @@ void main() {
     test('passes through a 401 response with non-OAuth2 www-authenticate', () async {
       var credentials = oauth2.Credentials(
         'access token',
-        parsed: {},
+        rawResponseData: {},
       );
       var client = oauth2.Client(credentials, identifier: 'identifier', secret: 'secret', httpClient: httpClient);
 

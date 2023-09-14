@@ -80,7 +80,7 @@ class Credentials extends Equatable {
   final GetParameters _getParameters;
 
   /// Parsed server response
-  final Map<String, dynamic> parsed;
+  final Map<String, dynamic> rawResponseData;
 
   /// Whether or not these credentials have expired.
   ///
@@ -124,7 +124,7 @@ class Credentials extends Equatable {
     this.expiration,
     String? delimiter,
     Map<String, dynamic> Function(MediaType? mediaType, String body)? getParameters,
-    this.parsed = const {},
+    this.rawResponseData = const {},
   })  : scopes = UnmodifiableListView(
             // Explicitly type-annotate the list literal to work around
             // sdk#24202.
@@ -187,7 +187,7 @@ class Credentials extends Equatable {
       tokenEndpoint: tokenEndpointUri,
       scopes: (scopes as List).map((scope) => scope as String),
       expiration: expirationDateTime,
-      parsed: parsed,
+      rawResponseData: parsed['raw'] as Map<String, dynamic>,
     );
   }
 
@@ -202,7 +202,7 @@ class Credentials extends Equatable {
         'tokenEndpoint': tokenEndpoint?.toString(),
         'scopes': scopes,
         'expiration': expiration?.millisecondsSinceEpoch,
-        'parsed': parsed,
+        'raw': rawResponseData,
       });
 
   /// Returns a new set of refreshed credentials.
@@ -268,7 +268,7 @@ class Credentials extends Equatable {
       tokenEndpoint: credentials.tokenEndpoint,
       scopes: credentials.scopes,
       expiration: credentials.expiration,
-      parsed: credentials.parsed,
+      rawResponseData: credentials.rawResponseData,
     );
   }
 
@@ -282,7 +282,7 @@ class Credentials extends Equatable {
       tokenEndpoint,
       scopes,
       expiration,
-      parsed,
+      rawResponseData,
     ];
   }
 }
