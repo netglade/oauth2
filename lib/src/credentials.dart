@@ -83,6 +83,8 @@ class Credentials extends Equatable {
   final GetParameters _getParameters;
 
   /// Parsed server response
+  ///
+  /// Due to backward-compatibility can be null after first deserialization.
   final Map<String, dynamic> rawResponseData;
 
   /// Whether or not these credentials have expired.
@@ -183,6 +185,7 @@ class Credentials extends Equatable {
       expirationDateTime = DateTime.fromMillisecondsSinceEpoch(expiration);
     }
 
+    final raw = parsed['raw'];
     return Credentials(
       parsed['accessToken'] as String,
       refreshToken: parsed['refreshToken'] as String?,
@@ -190,7 +193,7 @@ class Credentials extends Equatable {
       tokenEndpoint: tokenEndpointUri,
       scopes: (scopes as List).map((scope) => scope as String),
       expiration: expirationDateTime,
-      rawResponseData: parsed['raw'] as Map<String, dynamic>,
+      rawResponseData: raw != null ? raw as Map<String, dynamic> : {},
     );
   }
 
@@ -264,6 +267,7 @@ class Credentials extends Equatable {
     // The authorization server may issue a new refresh token. If it doesn't,
     // we should re-use the one we already have.
     if (credentials.refreshToken != null) return credentials;
+
     return Credentials(
       credentials.accessToken,
       refreshToken: refreshToken,
