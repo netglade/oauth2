@@ -20,6 +20,9 @@ typedef CredentialsRefreshedCallback = void Function(Credentials);
 /// Type of the callback when credentials started refresh call.
 typedef CredentialsRefreshingCallback = void Function(Credentials current);
 
+/// Type of the callback when credentials refresh failed.
+typedef CredentialsRefreshFailedCallback = void Function(Credentials current, Exception? exception);
+
 /// Credentials that prove that a client is allowed to access a resource on the
 /// resource owner's behalf.
 ///

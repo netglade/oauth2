@@ -1,5 +1,12 @@
 ## 2.1.1
  * Add `rawParsedData` parameter to credentials object for raw response data
+ * Add
+   ```code
+    CredentialsRefreshedCallback? onCredentialsRefreshed,
+    CredentialsRefreshingCallback? onCredentialsRefreshing,
+    CredentialsRefreshFailedCallback? onCredentialsRefreshFailed,
+
+   ```
 
 # 2.0.1
 

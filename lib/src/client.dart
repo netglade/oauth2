@@ -72,6 +72,9 @@ class Client extends http.BaseClient {
   /// Callback to be invoked whenever the credentials started to refresh.
   final CredentialsRefreshingCallback? _onCredentialsRefreshing;
 
+  /// Callback to be invoked whenever the credentials failed to refresh.
+  final CredentialsRefreshFailedCallback? _onCredentialsRefreshFailed;
+
   /// Whether to use HTTP Basic authentication for authorizing the client.
   final bool _basicAuth;
 
@@ -93,11 +96,13 @@ class Client extends http.BaseClient {
       this.secret,
       CredentialsRefreshedCallback? onCredentialsRefreshed,
       CredentialsRefreshingCallback? onCredentialsRefreshing,
+      CredentialsRefreshFailedCallback? onCredentialsRefreshFailed,
       bool basicAuth = true,
       http.Client? httpClient})
       : _basicAuth = basicAuth,
         _onCredentialsRefreshed = onCredentialsRefreshed,
         _onCredentialsRefreshing = onCredentialsRefreshing,
+        _onCredentialsRefreshFailed = onCredentialsRefreshFailed,
         _httpClient = httpClient ?? http.Client() {
     if (identifier == null && secret != null) {
       throw ArgumentError('secret may not be passed without identifier.');
@@ -172,6 +177,12 @@ class Client extends http.BaseClient {
         );
         _credentials = await _refreshingFuture!;
         _onCredentialsRefreshed?.call(_credentials);
+      } on AuthorizationException catch (e) {
+        _onCredentialsRefreshFailed?.call(credentials, e);
+        rethrow;
+      } on FormatException catch (e) {
+        _onCredentialsRefreshFailed?.call(credentials, e);
+        rethrow;
       } finally {
         _refreshingFuture = null;
       }
