@@ -30,10 +30,9 @@ const _expirationGrace = Duration(seconds: 10);
 /// format as the [standard JSON response][].
 ///
 /// [standard JSON response]: https://tools.ietf.org/html/rfc6749#section-5.1
-Credentials handleAccessTokenResponse(http.Response response, Uri tokenEndpoint,
-    DateTime startTime, List<String>? scopes, String delimiter,
-    {Map<String, dynamic> Function(MediaType? contentType, String body)?
-        getParameters}) {
+Credentials handleAccessTokenResponse(
+    http.Response response, Uri tokenEndpoint, DateTime startTime, List<String>? scopes, String delimiter,
+    {Map<String, dynamic> Function(MediaType? contentType, String body)? getParameters}) {
   getParameters ??= parseJsonParameters;
 
   try {
@@ -46,16 +45,13 @@ Credentials handleAccessTokenResponse(http.Response response, Uri tokenEndpoint,
       throw const FormatException('Missing Content-Type string.');
     }
 
-    var parameters =
-        getParameters(MediaType.parse(contentTypeString), response.body);
+    var parameters = getParameters(MediaType.parse(contentTypeString), response.body);
 
     for (var requiredParameter in ['access_token', 'token_type']) {
       if (!parameters.containsKey(requiredParameter)) {
-        throw FormatException(
-            'did not contain required parameter "$requiredParameter"');
+        throw FormatException('did not contain required parameter "$requiredParameter"');
       } else if (parameters[requiredParameter] is! String) {
-        throw FormatException(
-            'required parameter "$requiredParameter" was not a string, was '
+        throw FormatException('required parameter "$requiredParameter" was not a string, was '
             '"${parameters[requiredParameter]}"');
       }
     }
@@ -63,8 +59,7 @@ Credentials handleAccessTokenResponse(http.Response response, Uri tokenEndpoint,
     // TODO(nweiz): support the "mac" token type
     // (http://tools.ietf.org/html/draft-ietf-oauth-v2-http-mac-01)
     if ((parameters['token_type'] as String).toLowerCase() != 'bearer') {
-      throw FormatException(
-          '"$tokenEndpoint": unknown token type "${parameters['token_type']}"');
+      throw FormatException('"$tokenEndpoint": unknown token type "${parameters['token_type']}"');
     }
 
     var expiresIn = parameters['expires_in'];
@@ -73,29 +68,24 @@ Credentials handleAccessTokenResponse(http.Response response, Uri tokenEndpoint,
         try {
           expiresIn = double.parse(expiresIn).toInt();
         } on FormatException {
-          throw FormatException(
-              'parameter "expires_in" could not be parsed as in, was: "$expiresIn"');
+          throw FormatException('parameter "expires_in" could not be parsed as in, was: "$expiresIn"');
         }
       } else if (expiresIn is! int) {
-        throw FormatException(
-            'parameter "expires_in" was not an int, was: "$expiresIn"');
+        throw FormatException('parameter "expires_in" was not an int, was: "$expiresIn"');
       }
     }
 
     for (var name in ['refresh_token', 'id_token', 'scope']) {
       var value = parameters[name];
       if (value != null && value is! String) {
-        throw FormatException(
-            'parameter "$name" was not a string, was "$value"');
+        throw FormatException('parameter "$name" was not a string, was "$value"');
       }
     }
 
     var scope = parameters['scope'] as String?;
     if (scope != null) scopes = scope.split(delimiter);
 
-    var expiration = expiresIn == null
-        ? null
-        : startTime.add(Duration(seconds: expiresIn as int) - _expirationGrace);
+    var expiration = expiresIn == null ? null : startTime.add(Duration(seconds: expiresIn as int) - _expirationGrace);
 
     return Credentials(
       parameters['access_token'] as String,
@@ -104,6 +94,7 @@ Credentials handleAccessTokenResponse(http.Response response, Uri tokenEndpoint,
       tokenEndpoint: tokenEndpoint,
       scopes: scopes,
       expiration: expiration,
+      rawResponseData: parameters,
     );
   } on FormatException catch (e) {
     throw FormatException('Invalid OAuth response for "$tokenEndpoint": '
@@ -113,8 +104,7 @@ Credentials handleAccessTokenResponse(http.Response response, Uri tokenEndpoint,
 
 /// Throws the appropriate exception for an error response from the
 /// authorization server.
-void _handleErrorResponse(
-    http.Response response, Uri tokenEndpoint, GetParameters getParameters) {
+void _handleErrorResponse(http.Response response, Uri tokenEndpoint, GetParameters getParameters) {
   // OAuth2 mandates a 400 or 401 response code for access token error
   // responses. If it's not a 400 reponse, the server is either broken or
   // off-spec.
@@ -129,8 +119,7 @@ void _handleErrorResponse(
   }
 
   var contentTypeString = response.headers['content-type'];
-  var contentType =
-      contentTypeString == null ? null : MediaType.parse(contentTypeString);
+  var contentType = contentTypeString == null ? null : MediaType.parse(contentTypeString);
 
   var parameters = getParameters(contentType, response.body);
 

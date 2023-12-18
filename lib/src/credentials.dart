@@ -6,6 +6,7 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
 
+import 'package:equatable/equatable.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 
@@ -15,6 +16,12 @@ import 'utils.dart';
 
 /// Type of the callback when credentials are refreshed.
 typedef CredentialsRefreshedCallback = void Function(Credentials);
+
+/// Type of the callback when credentials started refresh call.
+typedef CredentialsRefreshingCallback = void Function(Credentials current);
+
+/// Type of the callback when credentials refresh failed.
+typedef CredentialsRefreshFailedCallback = void Function(Credentials current, Exception? exception);
 
 /// Credentials that prove that a client is allowed to access a resource on the
 /// resource owner's behalf.
@@ -30,9 +37,9 @@ typedef CredentialsRefreshedCallback = void Function(Credentials);
 ///
 /// Note that a given set of credentials can only be refreshed once, so be sure
 /// to save the refreshed credentials for future use.
-class Credentials {
+class Credentials extends Equatable {
   /// A [String] used to separate scopes; defaults to `" "`.
-  String _delimiter;
+  final String _delimiter;
 
   /// The token that is sent to the resource server to prove the authorization
   /// of a client.
@@ -75,6 +82,11 @@ class Credentials {
   /// The function used to parse parameters from a host's response.
   final GetParameters _getParameters;
 
+  /// Parsed server response
+  ///
+  /// Due to backward-compatibility can be null after first deserialization.
+  final Map<String, dynamic> rawResponseData;
+
   /// Whether or not these credentials have expired.
   ///
   /// Note that it's possible the credentials will expire shortly after this is
@@ -108,16 +120,17 @@ class Credentials {
   /// format as the [standard JSON response][].
   ///
   /// [standard JSON response]: https://tools.ietf.org/html/rfc6749#section-5.1
-  Credentials(this.accessToken,
-      {this.refreshToken,
-      this.idToken,
-      this.tokenEndpoint,
-      Iterable<String>? scopes,
-      this.expiration,
-      String? delimiter,
-      Map<String, dynamic> Function(MediaType? mediaType, String body)?
-          getParameters})
-      : scopes = UnmodifiableListView(
+  Credentials(
+    this.accessToken, {
+    this.refreshToken,
+    this.idToken,
+    this.tokenEndpoint,
+    Iterable<String>? scopes,
+    this.expiration,
+    String? delimiter,
+    Map<String, dynamic> Function(MediaType? mediaType, String body)? getParameters,
+    this.rawResponseData = const {},
+  })  : scopes = UnmodifiableListView(
             // Explicitly type-annotate the list literal to work around
             // sdk#24202.
             scopes == null ? <String>[] : scopes.toList()),
@@ -142,9 +155,8 @@ class Credentials {
 
     validate(parsed is Map, 'was not a JSON map');
 
-    parsed = parsed as Map;
-    validate(parsed.containsKey('accessToken'),
-        'did not contain required field "accessToken"');
+    parsed = parsed as Map<String, dynamic>;
+    validate(parsed.containsKey('accessToken'), 'did not contain required field "accessToken"');
     validate(
       parsed['accessToken'] is String,
       'required field "accessToken" was not a string, was '
@@ -153,13 +165,11 @@ class Credentials {
 
     for (var stringField in ['refreshToken', 'idToken', 'tokenEndpoint']) {
       var value = parsed[stringField];
-      validate(value == null || value is String,
-          'field "$stringField" was not a string, was "$value"');
+      validate(value == null || value is String, 'field "$stringField" was not a string, was "$value"');
     }
 
     var scopes = parsed['scopes'];
-    validate(scopes == null || scopes is List,
-        'field "scopes" was not a list, was "$scopes"');
+    validate(scopes == null || scopes is List, 'field "scopes" was not a list, was "$scopes"');
 
     var tokenEndpoint = parsed['tokenEndpoint'];
     Uri? tokenEndpointUri;
@@ -170,12 +180,12 @@ class Credentials {
     var expiration = parsed['expiration'];
     DateTime? expirationDateTime;
     if (expiration != null) {
-      validate(expiration is int,
-          'field "expiration" was not an int, was "$expiration"');
+      validate(expiration is int, 'field "expiration" was not an int, was "$expiration"');
       expiration = expiration as int;
       expirationDateTime = DateTime.fromMillisecondsSinceEpoch(expiration);
     }
 
+    final raw = parsed['raw'];
     return Credentials(
       parsed['accessToken'] as String,
       refreshToken: parsed['refreshToken'] as String?,
@@ -183,6 +193,7 @@ class Credentials {
       tokenEndpoint: tokenEndpointUri,
       scopes: (scopes as List).map((scope) => scope as String),
       expiration: expirationDateTime,
+      rawResponseData: raw != null ? raw as Map<String, dynamic> : {},
     );
   }
 
@@ -196,7 +207,8 @@ class Credentials {
         'idToken': idToken,
         'tokenEndpoint': tokenEndpoint?.toString(),
         'scopes': scopes,
-        'expiration': expiration?.millisecondsSinceEpoch
+        'expiration': expiration?.millisecondsSinceEpoch,
+        'raw': rawResponseData,
       });
 
   /// Returns a new set of refreshed credentials.
@@ -248,20 +260,36 @@ class Credentials {
       if (secret != null) body['client_secret'] = secret;
     }
 
-    var response =
-        await httpClient.post(tokenEndpoint, headers: headers, body: body);
-    var credentials = handleAccessTokenResponse(
-        response, tokenEndpoint, startTime, scopes, _delimiter,
+    var response = await httpClient.post(tokenEndpoint, headers: headers, body: body);
+    var credentials = handleAccessTokenResponse(response, tokenEndpoint, startTime, scopes, _delimiter,
         getParameters: _getParameters);
 
     // The authorization server may issue a new refresh token. If it doesn't,
     // we should re-use the one we already have.
     if (credentials.refreshToken != null) return credentials;
-    return Credentials(credentials.accessToken,
-        refreshToken: refreshToken,
-        idToken: credentials.idToken,
-        tokenEndpoint: credentials.tokenEndpoint,
-        scopes: credentials.scopes,
-        expiration: credentials.expiration);
+
+    return Credentials(
+      credentials.accessToken,
+      refreshToken: refreshToken,
+      idToken: credentials.idToken,
+      tokenEndpoint: credentials.tokenEndpoint,
+      scopes: credentials.scopes,
+      expiration: credentials.expiration,
+      rawResponseData: credentials.rawResponseData,
+    );
+  }
+
+  @override
+  List<Object?> get props {
+    return [
+      _delimiter,
+      accessToken,
+      refreshToken,
+      idToken,
+      tokenEndpoint,
+      scopes,
+      expiration,
+      rawResponseData,
+    ];
   }
 }

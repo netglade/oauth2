@@ -1,3 +1,26 @@
+## 2.3.0
+* Bump `http` to version 1.1.0.
+
+## 2.2.0
+* Fix nullability.
+* Allow Dart 3.
+
+## 2.2.1
+ * Fix `rawParsedData` can be null due to backward compatibility
+
+## 2.2.0
+ * Add `rawParsedData` parameter to credentials object for raw response data
+
+## 2.1.1
+
+ * Add
+   ```code
+    CredentialsRefreshedCallback? onCredentialsRefreshed,
+    CredentialsRefreshingCallback? onCredentialsRefreshing,
+    CredentialsRefreshFailedCallback? onCredentialsRefreshFailed,
+
+   ```
+
 # 2.0.1
 
 * Handle `expires_in` when encoded as string.
