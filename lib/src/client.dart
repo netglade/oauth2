@@ -171,11 +171,7 @@ class Client extends http.BaseClient {
     // [_onBeforeCredentialsRefreshed] can be used to health-check api to refresh credentials
     // and stop refreshing if it returns false.
     final canContinue = await _onBeforeCredentialsRefreshed?.call(credentials) ?? true;
-    if (!canContinue) {
-      _onCredentialsRefreshFailed?.call(credentials, null);
-      _refreshingFuture = null;
-      return this;
-    }
+    if (!canContinue) return this;
 
     // To make sure that only one refresh happens when credentials are expired
     // we track it using the [_refreshingFuture]. And also make sure that the
