@@ -66,6 +66,10 @@ class Client extends http.BaseClient {
   Credentials get credentials => _credentials;
   Credentials _credentials;
 
+  /// Callback to be invoked before the credentials are refreshed.
+  /// Returns [bool] indicating whether to continue refreshing or not.
+  final BeforeCredentialsRefreshedCallback? _onBeforeCredentialsRefreshed;
+
   /// Callback to be invoked whenever the credentials refreshed.
   final CredentialsRefreshedCallback? _onCredentialsRefreshed;
 
@@ -94,12 +98,14 @@ class Client extends http.BaseClient {
   Client(this._credentials,
       {this.identifier,
       this.secret,
+      BeforeCredentialsRefreshedCallback? onBeforeCredentialsRefreshed,
       CredentialsRefreshedCallback? onCredentialsRefreshed,
       CredentialsRefreshingCallback? onCredentialsRefreshing,
       CredentialsRefreshFailedCallback? onCredentialsRefreshFailed,
       bool basicAuth = true,
       http.Client? httpClient})
       : _basicAuth = basicAuth,
+        _onBeforeCredentialsRefreshed = onBeforeCredentialsRefreshed,
         _onCredentialsRefreshed = onCredentialsRefreshed,
         _onCredentialsRefreshing = onCredentialsRefreshing,
         _onCredentialsRefreshFailed = onCredentialsRefreshFailed,
@@ -161,6 +167,11 @@ class Client extends http.BaseClient {
       if (credentials.isExpired) prefix = '$prefix have expired and';
       throw StateError("$prefix can't be refreshed.");
     }
+
+    // [_onBeforeCredentialsRefreshed] can be used to health-check api to refresh credentials
+    // and stop refreshing if it returns false.
+    final canContinue = await _onBeforeCredentialsRefreshed?.call(credentials) ?? true;
+    if (!canContinue) return this;
 
     // To make sure that only one refresh happens when credentials are expired
     // we track it using the [_refreshingFuture]. And also make sure that the

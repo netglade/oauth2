@@ -14,8 +14,11 @@ import 'handle_access_token_response.dart';
 import 'parameters.dart';
 import 'utils.dart';
 
+/// Type of the callback before credentials are refreshed.
+typedef BeforeCredentialsRefreshedCallback = Future<bool> Function(Credentials current);
+
 /// Type of the callback when credentials are refreshed.
-typedef CredentialsRefreshedCallback = void Function(Credentials);
+typedef CredentialsRefreshedCallback = void Function(Credentials newCredentials);
 
 /// Type of the callback when credentials started refresh call.
 typedef CredentialsRefreshingCallback = void Function(Credentials current);
