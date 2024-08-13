@@ -1,3 +1,6 @@
+## 2.4.0
+* Add `onBeforeCredentialsRefreshed` callback to `Client`.
+
 ## 2.3.0
 * Bump `http` to version 1.1.0.
 
