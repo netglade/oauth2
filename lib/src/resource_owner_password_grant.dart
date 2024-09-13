@@ -53,6 +53,8 @@ Future<Client> resourceOwnerPasswordGrant(Uri authorizationEndpoint, String user
     CredentialsRefreshingCallback? onCredentialsRefreshing,
     http.Client? httpClient,
     String? delimiter,
+    String? trackingId,
+    Map<String, String>? additionalHeaders,
     Map<String, dynamic> Function(MediaType? contentType, String body)? getParameters}) async {
   delimiter ??= ' ';
   var startTime = DateTime.now();
@@ -60,6 +62,7 @@ Future<Client> resourceOwnerPasswordGrant(Uri authorizationEndpoint, String user
   var body = {'grant_type': 'password', 'username': username, 'password': password};
 
   var headers = <String, String>{};
+  headers = addTrackingHeaders(headers, trackingId, additionalHeaders);
 
   if (identifier != null) {
     if (basicAuth) {

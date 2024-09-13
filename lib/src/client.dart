@@ -11,6 +11,7 @@ import 'package:http_parser/http_parser.dart';
 import 'authorization_exception.dart';
 import 'credentials.dart';
 import 'expiration_exception.dart';
+import 'request_properties.dart';
 
 /// An OAuth2 client.
 ///
@@ -120,10 +121,13 @@ class Client extends http.BaseClient {
   /// This will also automatically refresh this client's [Credentials] before
   /// sending the request if necessary.
   @override
-  Future<http.StreamedResponse> send(http.BaseRequest request) async {
+  Future<http.StreamedResponse> send(
+    http.BaseRequest request, {
+    RequestProperties? requestProperties,
+  }) async {
     if (credentials.isExpired) {
       if (!credentials.canRefresh) throw ExpirationException(credentials);
-      await refreshCredentials();
+      await refreshCredentials(trackingId: requestProperties?.trackingId);
     }
 
     request.headers['authorization'] = 'Bearer ${credentials.accessToken}';
@@ -161,7 +165,8 @@ class Client extends http.BaseClient {
   /// You may request different scopes than the default by passing in
   /// [newScopes]. These must be a subset of the scopes in the
   /// [Credentials.scopes] field of [Client.credentials].
-  Future<Client> refreshCredentials([List<String>? newScopes]) async {
+  Future<Client> refreshCredentials(
+      {List<String>? newScopes, String? trackingId, Map<String, String>? additionalHeaders}) async {
     if (!credentials.canRefresh) {
       var prefix = 'OAuth credentials';
       if (credentials.isExpired) prefix = '$prefix have expired and';
@@ -185,6 +190,8 @@ class Client extends http.BaseClient {
           newScopes: newScopes,
           basicAuth: _basicAuth,
           httpClient: _httpClient,
+          trackingId: trackingId,
+          additionalHeaders: additionalHeaders,
         );
         _credentials = await _refreshingFuture!;
         _onCredentialsRefreshed?.call(_credentials);
