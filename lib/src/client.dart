@@ -127,7 +127,7 @@ class Client extends http.BaseClient {
   }) async {
     if (credentials.isExpired) {
       if (!credentials.canRefresh) throw ExpirationException(credentials);
-      await refreshCredentials(trackingId: requestProperties?.trackingId);
+      await refreshCredentials(trackingId: requestProperties?.trackingId, additionalHeaders: request.headers);
     }
 
     request.headers['authorization'] = 'Bearer ${credentials.accessToken}';

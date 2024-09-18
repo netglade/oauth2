@@ -17,7 +17,7 @@ String basicAuthHeader(String identifier, String secret) {
 
 Map<String, String> addTrackingHeaders(
     Map<String, String> headers, String? trackingId, Map<String, String>? additionalHeaders) {
-  if (trackingId != null) headers[HttpHeadersConsts.trackingId] = trackingId;
   if (additionalHeaders != null) headers.addAll(additionalHeaders);
+  if (trackingId != null) headers[HttpHeadersConsts.trackingId] = trackingId;
   return headers;
 }
