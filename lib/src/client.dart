@@ -9,9 +9,11 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 
 import 'authorization_exception.dart';
+import 'constants.dart';
 import 'credentials.dart';
 import 'expiration_exception.dart';
 import 'request_properties.dart';
+import 'dart:io';
 
 /// An OAuth2 client.
 ///
@@ -121,13 +123,11 @@ class Client extends http.BaseClient {
   /// This will also automatically refresh this client's [Credentials] before
   /// sending the request if necessary.
   @override
-  Future<http.StreamedResponse> send(
-    http.BaseRequest request, {
-    RequestProperties? requestProperties,
-  }) async {
+  Future<http.StreamedResponse> send(http.BaseRequest request) async {
     if (credentials.isExpired) {
       if (!credentials.canRefresh) throw ExpirationException(credentials);
-      await refreshCredentials(trackingId: requestProperties?.trackingId, additionalHeaders: request.headers);
+      await refreshCredentials(
+          trackingId: request.headers[HttpHeadersConsts.trackingId], additionalHeaders: request.headers);
     }
 
     request.headers['authorization'] = 'Bearer ${credentials.accessToken}';
