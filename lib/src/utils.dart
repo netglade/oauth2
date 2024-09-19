@@ -15,8 +15,7 @@ String basicAuthHeader(String identifier, String secret) {
   return 'Basic ${base64Encode(ascii.encode(userPass))}';
 }
 
-Map<String, String> addTrackingHeaders(
-    Map<String, String> headers, String? trackingId, Map<String, String>? additionalHeaders) {
+void addTrackingHeaders(Map<String, String> headers, String? trackingId, Map<String, String>? additionalHeaders) {
   if (additionalHeaders != null) {
     if (additionalHeaders[HttpHeadersConsts.userUID] != null) {
       headers[HttpHeadersConsts.userUID] = additionalHeaders[HttpHeadersConsts.userUID]!;
@@ -38,5 +37,4 @@ Map<String, String> addTrackingHeaders(
     }
   }
   if (trackingId != null) headers[HttpHeadersConsts.trackingId] = trackingId;
-  return headers;
 }
