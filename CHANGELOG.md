@@ -1,3 +1,6 @@
+## 2.5.0
+* Add `trackingId` and other headers to refresh credentials request.
+
 ## 2.4.0
 * Add `onBeforeCredentialsRefreshed` callback to `Client`.
 
