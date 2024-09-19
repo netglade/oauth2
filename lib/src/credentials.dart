@@ -231,6 +231,8 @@ class Credentials extends Equatable {
       String? secret,
       Iterable<String>? newScopes,
       bool basicAuth = true,
+      String? trackingId,
+      Map<String, String>? additionalHeaders,
       http.Client? httpClient}) async {
     var scopes = this.scopes;
     if (newScopes != null) scopes = newScopes.toList();
@@ -252,6 +254,7 @@ class Credentials extends Equatable {
     }
 
     var headers = <String, String>{};
+    addTrackingHeaders(headers, trackingId, additionalHeaders);
 
     var body = {'grant_type': 'refresh_token', 'refresh_token': refreshToken};
     if (scopes.isNotEmpty) body['scope'] = scopes.join(_delimiter);
