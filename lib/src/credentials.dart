@@ -168,8 +168,7 @@ class Credentials extends Equatable {
 
     for (var stringField in ['refreshToken', 'idToken', 'tokenEndpoint']) {
       var value = parsed[stringField];
-      validate(
-          value == null || value is String, 'field "$stringField" was not a string, was "$value"');
+      validate(value == null || value is String, 'field "$stringField" was not a string, was "$value"');
     }
 
     var scopes = parsed['scopes'];
@@ -255,7 +254,7 @@ class Credentials extends Equatable {
     }
 
     var headers = <String, String>{};
-    headers = addTrackingHeaders(headers, trackingId, additionalHeaders);
+    addTrackingHeaders(headers, trackingId, additionalHeaders);
 
     var body = {'grant_type': 'refresh_token', 'refresh_token': refreshToken};
     if (scopes.isNotEmpty) body['scope'] = scopes.join(_delimiter);
@@ -268,8 +267,7 @@ class Credentials extends Equatable {
     }
 
     var response = await httpClient.post(tokenEndpoint, headers: headers, body: body);
-    var credentials = handleAccessTokenResponse(
-        response, tokenEndpoint, startTime, scopes, _delimiter,
+    var credentials = handleAccessTokenResponse(response, tokenEndpoint, startTime, scopes, _delimiter,
         getParameters: _getParameters);
 
     // The authorization server may issue a new refresh token. If it doesn't,

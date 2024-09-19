@@ -62,7 +62,7 @@ Future<Client> resourceOwnerPasswordGrant(Uri authorizationEndpoint, String user
   var body = {'grant_type': 'password', 'username': username, 'password': password};
 
   var headers = <String, String>{};
-  headers = addTrackingHeaders(headers, trackingId, additionalHeaders);
+  addTrackingHeaders(headers, trackingId, additionalHeaders);
 
   if (identifier != null) {
     if (basicAuth) {

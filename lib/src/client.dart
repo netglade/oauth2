@@ -12,8 +12,6 @@ import 'authorization_exception.dart';
 import 'constants.dart';
 import 'credentials.dart';
 import 'expiration_exception.dart';
-import 'request_properties.dart';
-import 'dart:io';
 
 /// An OAuth2 client.
 ///

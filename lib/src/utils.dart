@@ -3,6 +3,7 @@
 // BSD-style license that can be found in the LICENSE file.
 
 import 'dart:convert';
+import 'dart:io';
 import 'constants.dart';
 
 /// Adds additional query parameters to [url], overwriting the original
@@ -17,24 +18,8 @@ String basicAuthHeader(String identifier, String secret) {
 
 void addTrackingHeaders(Map<String, String> headers, String? trackingId, Map<String, String>? additionalHeaders) {
   if (additionalHeaders != null) {
-    if (additionalHeaders[HttpHeadersConsts.userUID] != null) {
-      headers[HttpHeadersConsts.userUID] = additionalHeaders[HttpHeadersConsts.userUID]!;
-    }
-    if (additionalHeaders[HttpHeadersConsts.globalUserId] != null) {
-      headers[HttpHeadersConsts.globalUserId] = additionalHeaders[HttpHeadersConsts.globalUserId]!;
-    }
-    if (additionalHeaders[HttpHeadersConsts.trackingId] != null) {
-      headers[HttpHeadersConsts.trackingId] = additionalHeaders[HttpHeadersConsts.trackingId]!;
-    }
-    if (additionalHeaders[HttpHeadersConsts.applicationVersion] != null) {
-      headers[HttpHeadersConsts.applicationVersion] = additionalHeaders[HttpHeadersConsts.applicationVersion]!;
-    }
-    if (additionalHeaders[HttpHeadersConsts.appVersion] != null) {
-      headers[HttpHeadersConsts.appVersion] = additionalHeaders[HttpHeadersConsts.appVersion]!;
-    }
-    if (additionalHeaders[HttpHeadersConsts.clientOs] != null) {
-      headers[HttpHeadersConsts.clientOs] = additionalHeaders[HttpHeadersConsts.clientOs]!;
-    }
+    headers.addAll(additionalHeaders);
+    headers.remove(HttpHeaders.contentTypeHeader);
   }
   if (trackingId != null) headers[HttpHeadersConsts.trackingId] = trackingId;
 }
