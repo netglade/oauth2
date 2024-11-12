@@ -1,3 +1,6 @@
+## 2.6.0
+* Add retry() mechanism inside refresh credentials
+
 ## 2.5.0
 * Add `trackingId` and other headers to refresh credentials request.
 
