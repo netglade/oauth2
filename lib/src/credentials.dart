@@ -9,6 +9,7 @@ import 'dart:convert';
 import 'package:equatable/equatable.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
+import 'package:retry/retry.dart';
 
 import 'handle_access_token_response.dart';
 import 'parameters.dart';
@@ -25,6 +26,8 @@ typedef CredentialsRefreshingCallback = void Function(Credentials current);
 
 /// Type of the callback when credentials refresh failed.
 typedef CredentialsRefreshFailedCallback = void Function(Credentials current, Exception? exception);
+
+typedef CredentialsRetryOnExceptionCallback = void Function(Exception exception);
 
 /// Credentials that prove that a client is allowed to access a resource on the
 /// resource owner's behalf.
@@ -233,7 +236,8 @@ class Credentials extends Equatable {
       bool basicAuth = true,
       String? trackingId,
       Map<String, String>? additionalHeaders,
-      http.Client? httpClient}) async {
+      http.Client? httpClient,
+      CredentialsRetryOnExceptionCallback? onRefreshExceptionRetry}) async {
     var scopes = this.scopes;
     if (newScopes != null) scopes = newScopes.toList();
     scopes ??= [];
@@ -266,7 +270,11 @@ class Credentials extends Equatable {
       if (secret != null) body['client_secret'] = secret;
     }
 
-    var response = await httpClient.post(tokenEndpoint, headers: headers, body: body);
+    var response = await retry(
+      () => httpClient!.post(tokenEndpoint, headers: headers, body: body).timeout(const Duration(seconds: 10)),
+      maxAttempts: 3,
+      onRetry: onRefreshExceptionRetry,
+    );
     var credentials = handleAccessTokenResponse(response, tokenEndpoint, startTime, scopes, _delimiter,
         getParameters: _getParameters);
 

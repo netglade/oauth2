@@ -80,6 +80,9 @@ class Client extends http.BaseClient {
   /// Callback to be invoked whenever the credentials failed to refresh.
   final CredentialsRefreshFailedCallback? _onCredentialsRefreshFailed;
 
+  /// Callback to be invoked whenever the credentials failed to refresh.
+  final CredentialsRetryOnExceptionCallback? _onCredentialsRetryOnException;
+
   /// Whether to use HTTP Basic authentication for authorizing the client.
   final bool _basicAuth;
 
@@ -103,6 +106,7 @@ class Client extends http.BaseClient {
       CredentialsRefreshedCallback? onCredentialsRefreshed,
       CredentialsRefreshingCallback? onCredentialsRefreshing,
       CredentialsRefreshFailedCallback? onCredentialsRefreshFailed,
+      CredentialsRetryOnExceptionCallback? onCredentialsRetryOnException,
       bool basicAuth = true,
       http.Client? httpClient})
       : _basicAuth = basicAuth,
@@ -110,6 +114,7 @@ class Client extends http.BaseClient {
         _onCredentialsRefreshed = onCredentialsRefreshed,
         _onCredentialsRefreshing = onCredentialsRefreshing,
         _onCredentialsRefreshFailed = onCredentialsRefreshFailed,
+        _onCredentialsRetryOnException = onCredentialsRetryOnException,
         _httpClient = httpClient ?? http.Client() {
     if (identifier == null && secret != null) {
       throw ArgumentError('secret may not be passed without identifier.');
@@ -125,7 +130,10 @@ class Client extends http.BaseClient {
     if (credentials.isExpired) {
       if (!credentials.canRefresh) throw ExpirationException(credentials);
       await refreshCredentials(
-          trackingId: request.headers[HttpHeadersConsts.trackingId], additionalHeaders: request.headers);
+        trackingId: request.headers[HttpHeadersConsts.trackingId],
+        additionalHeaders: request.headers,
+        onRefreshExceptionRetry: _onCredentialsRetryOnException,
+      );
     }
 
     request.headers['authorization'] = 'Bearer ${credentials.accessToken}';
@@ -164,7 +172,10 @@ class Client extends http.BaseClient {
   /// [newScopes]. These must be a subset of the scopes in the
   /// [Credentials.scopes] field of [Client.credentials].
   Future<Client> refreshCredentials(
-      {List<String>? newScopes, String? trackingId, Map<String, String>? additionalHeaders}) async {
+      {List<String>? newScopes,
+      String? trackingId,
+      Map<String, String>? additionalHeaders,
+      CredentialsRetryOnExceptionCallback? onRefreshExceptionRetry}) async {
     if (!credentials.canRefresh) {
       var prefix = 'OAuth credentials';
       if (credentials.isExpired) prefix = '$prefix have expired and';
@@ -190,6 +201,7 @@ class Client extends http.BaseClient {
           httpClient: _httpClient,
           trackingId: trackingId,
           additionalHeaders: additionalHeaders,
+          onRefreshExceptionRetry: onRefreshExceptionRetry,
         );
         _credentials = await _refreshingFuture!;
         _onCredentialsRefreshed?.call(_credentials);
