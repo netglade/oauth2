@@ -6,6 +6,7 @@ export 'src/authorization_code_grant.dart';
 export 'src/authorization_exception.dart';
 export 'src/client.dart';
 export 'src/client_credentials_grant.dart';
+export 'src/constants.dart' show OAuth2Consts;
 export 'src/credentials.dart';
 export 'src/expiration_exception.dart';
 export 'src/resource_owner_password_grant.dart';

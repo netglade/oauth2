@@ -11,6 +11,7 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:retry/retry.dart';
 
+import 'constants.dart';
 import 'handle_access_token_response.dart';
 import 'parameters.dart';
 import 'utils.dart';
@@ -98,9 +99,9 @@ class Credentials extends Equatable {
   /// Note that it's possible the credentials will expire shortly after this is
   /// called. However, since the client's expiration date is kept a few seconds
   /// earlier than the server's, there should be enough leeway to rely on this.
-  bool get isExpired {
+  bool isExpired({int checkLeewaySeconds = OAuth2Consts.accessTokenExpirationLeewayInSeconds}) {
     var expiration = this.expiration;
-    return expiration != null && DateTime.now().isAfter(expiration);
+    return expiration != null && DateTime.now().add(Duration(seconds: checkLeewaySeconds)).isAfter(expiration);
   }
 
   /// Whether it's possible to refresh these credentials.

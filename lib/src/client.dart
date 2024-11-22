@@ -67,6 +67,11 @@ class Client extends http.BaseClient {
   Credentials get credentials => _credentials;
   Credentials _credentials;
 
+  /// Include a buffer period (commonly 30 seconds to 5 minutes) when checking token validity.
+  ///
+  /// Adding a small leeway improves the robustness of token handling without significantly affecting security.
+  final int credentialsExpirationLeewayInSeconds;
+
   /// Callback to be invoked before the credentials are refreshed.
   /// Returns [bool] indicating whether to continue refreshing or not.
   final BeforeCredentialsRefreshedCallback? _onBeforeCredentialsRefreshed;
@@ -108,6 +113,7 @@ class Client extends http.BaseClient {
       CredentialsRefreshFailedCallback? onCredentialsRefreshFailed,
       CredentialsRetryOnExceptionCallback? onCredentialsRetryOnException,
       bool basicAuth = true,
+      this.credentialsExpirationLeewayInSeconds = OAuth2Consts.accessTokenExpirationLeewayInSeconds,
       http.Client? httpClient})
       : _basicAuth = basicAuth,
         _onBeforeCredentialsRefreshed = onBeforeCredentialsRefreshed,
@@ -127,7 +133,7 @@ class Client extends http.BaseClient {
   /// sending the request if necessary.
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
-    if (credentials.isExpired) {
+    if (credentials.isExpired(checkLeewaySeconds: credentialsExpirationLeewayInSeconds)) {
       if (!credentials.canRefresh) throw ExpirationException(credentials);
       await refreshCredentials(
         trackingId: request.headers[HttpHeadersConsts.trackingId],
@@ -178,7 +184,9 @@ class Client extends http.BaseClient {
       CredentialsRetryOnExceptionCallback? onRefreshExceptionRetry}) async {
     if (!credentials.canRefresh) {
       var prefix = 'OAuth credentials';
-      if (credentials.isExpired) prefix = '$prefix have expired and';
+      if (credentials.isExpired(checkLeewaySeconds: credentialsExpirationLeewayInSeconds)) {
+        prefix = '$prefix have expired and';
+      }
       throw StateError("$prefix can't be refreshed.");
     }
 
