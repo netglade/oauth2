@@ -1,3 +1,6 @@
+## 2.7.0
+* Add access token expiration leeway buffer
+
 ## 2.6.0
 * Add retry() mechanism inside refresh credentials
 
